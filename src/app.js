@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 
 const UserRouter = require('./routes/auth/auth.router');
 const DashboardRouter = require('./routes/dashboard/dashboard.router');
+const ChallengeRouter = require('./routes/challenges/challenge.router');
+const AuthRouter = require('./routes/user/user.router');
 
 const app = express();
 
@@ -42,6 +44,9 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', UserRouter);
 app.use('/api/dashboard', DashboardRouter);
+
+app.use('/api/challenges', ChallengeRouter);
+app.use('/api/users', AuthRouter);
 
 // Auth helpers (root)
 app.get('/check-cookie', (req, res) => {
