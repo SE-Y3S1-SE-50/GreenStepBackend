@@ -38,8 +38,8 @@ const getUserProfile = async (req, res) => {
                 phoneNumber: user.phoneNumber,
                 profilePicture: user.profilePicture || '',
                 stats: {
-                    totalChallengesJoined: user.challengesJoined ? user.challengesJoined.length : (user.statistics?.challengesJoined || 0),
-                    totalChallengesCompleted: user.completedChallenges ? user.completedChallenges.length : (user.statistics?.challengesCompleted || 0),
+                    totalChallengesJoined: user.statistics?.challengesJoined || 0,
+                    totalChallengesCompleted: user.statistics?.challengesCompleted || 0,
                     totalPoints: user.totalPoints || 0,
                     currentLevel: level,
                     pointsToNextLevel: pointsToNextLevel

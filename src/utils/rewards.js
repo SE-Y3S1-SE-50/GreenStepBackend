@@ -1,4 +1,4 @@
-const { addUserBadge, addUserAchievement, incrementUserStats } = require('../../models/users.model');
+const { addUserBadge, addUserAchievement, incrementUserStats } = require('../models/users.model');
 
 // Badge definitions
 const BADGES = {
@@ -82,37 +82,43 @@ const BADGES = {
 // Check and award badges based on user progress
 const checkAndAwardBadges = async (userId, userStats, completedChallenge = null) => {
   try {
+    // Get current user to check existing badges
+    const User = require('../models/users.mongo');
+    const user = await User.findById(userId);
+    const existingBadges = user.badges || [];
+    const existingBadgeNames = existingBadges.map(badge => badge.name);
+    
     const newBadges = [];
 
     // Challenge completion badges
-    if (userStats.challengesCompleted === 1) {
+    if (userStats.challengesCompleted === 1 && !existingBadgeNames.includes('First Step')) {
       newBadges.push(BADGES.FIRST_CHALLENGE);
-    } else if (userStats.challengesCompleted === 5) {
+    } else if (userStats.challengesCompleted === 5 && !existingBadgeNames.includes('Challenger')) {
       newBadges.push(BADGES.CHALLENGER);
-    } else if (userStats.challengesCompleted === 10) {
+    } else if (userStats.challengesCompleted === 10 && !existingBadgeNames.includes('Eco Warrior')) {
       newBadges.push(BADGES.ECO_WARRIOR);
-    } else if (userStats.challengesCompleted === 25) {
+    } else if (userStats.challengesCompleted === 25 && !existingBadgeNames.includes('Green Champion')) {
       newBadges.push(BADGES.GREEN_CHAMPION);
-    } else if (userStats.challengesCompleted === 50) {
+    } else if (userStats.challengesCompleted === 50 && !existingBadgeNames.includes('Planet Protector')) {
       newBadges.push(BADGES.PLANET_PROTECTOR);
     }
 
     // Challenge creation badges
-    if (userStats.challengesCreated === 1) {
+    if (userStats.challengesCreated === 1 && !existingBadgeNames.includes('Creator')) {
       newBadges.push(BADGES.CREATOR);
-    } else if (userStats.challengesCreated === 5) {
+    } else if (userStats.challengesCreated === 5 && !existingBadgeNames.includes('Innovator')) {
       newBadges.push(BADGES.INNOVATOR);
-    } else if (userStats.challengesCreated === 10) {
+    } else if (userStats.challengesCreated === 10 && !existingBadgeNames.includes('Leader')) {
       newBadges.push(BADGES.LEADER);
     }
 
     // Challenge joining badges
-    if (userStats.challengesJoined === 10) {
+    if (userStats.challengesJoined === 10 && !existingBadgeNames.includes('Social Butterfly')) {
       newBadges.push(BADGES.SOCIAL_BUTTERFLY);
     }
 
     // Point-based badges
-    if (userStats.totalPoints >= 1000) {
+    if (userStats.totalPoints >= 1000 && !existingBadgeNames.includes('Point Collector')) {
       newBadges.push(BADGES.POINT_COLLECTOR);
     }
 
@@ -126,11 +132,10 @@ const checkAndAwardBadges = async (userId, userStats, completedChallenge = null)
         food: BADGES.FOOD_HERO
       };
 
-      // This would need category completion tracking in the user model
-      // For now, we'll award based on total completions
-      if (userStats.challengesCompleted >= 5 && categoryBadges[completedChallenge.category]) {
-        // In a real implementation, you'd track category-specific completions
-        // For demo purposes, we'll award the first category badge encountered
+      // Award category badge if user has completed 5+ challenges and doesn't have this category badge
+      if (userStats.challengesCompleted >= 5 && categoryBadges[completedChallenge.category] && 
+          !existingBadgeNames.includes(categoryBadges[completedChallenge.category].name)) {
+        newBadges.push(categoryBadges[completedChallenge.category]);
       }
     }
 
@@ -195,13 +200,22 @@ const awardChallengeCreation = async (userId) => {
   try {
     const pointsEarned = 50; // Bonus points for creating a challenge
     
-    // This would need to be implemented in the user model
-    // For now, we'll just increment the creation count
-    await incrementUserStats(userId, 'challengesCreated');
+    // Add points to user and increment creation count
+    const User = require('../models/users.mongo');
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+      $inc: { 
+        totalPoints: pointsEarned,
+        'statistics.challengesCreated': 1
+      }
+    }, { new: true });
+    
+    // Check for new badges
+    const newBadges = await checkAndAwardBadges(userId, updatedUser.statistics);
     
     return {
       pointsEarned: pointsEarned,
-      message: 'Challenge created! You earned 50 bonus points.'
+      message: 'Challenge created! You earned 50 bonus points.',
+      newBadges: newBadges
     };
   } catch (error) {
     console.error('Error awarding creation rewards:', error);
@@ -214,11 +228,22 @@ const awardChallengeJoin = async (userId) => {
   try {
     const pointsEarned = 5; // Small bonus for joining
     
-    await incrementUserStats(userId, 'challengesJoined');
+    // Add points and increment joined count
+    const User = require('../models/users.mongo');
+    const updatedUser = await User.findByIdAndUpdate(userId, {
+      $inc: { 
+        totalPoints: pointsEarned,
+        'statistics.challengesJoined': 1
+      }
+    }, { new: true });
+    
+    // Check for new badges
+    const newBadges = await checkAndAwardBadges(userId, updatedUser.statistics);
     
     return {
       pointsEarned: pointsEarned,
-      message: 'Challenge joined! You earned 5 participation points.'
+      message: 'Challenge joined! You earned 5 participation points.',
+      newBadges: newBadges
     };
   } catch (error) {
     console.error('Error awarding join rewards:', error);

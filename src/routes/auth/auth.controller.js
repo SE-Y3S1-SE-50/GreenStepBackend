@@ -37,6 +37,7 @@ const login = async (req, res) => {
             "Message": "Login successful",  
             "role": user.role || 'user',
             "id": user._id.toString(),
+            "token": token,
             "user": {
                 id: user._id.toString(),
                 username: user.username,
