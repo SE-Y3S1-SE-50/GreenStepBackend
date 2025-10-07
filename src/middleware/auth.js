@@ -30,15 +30,23 @@ const authenticateToken = async (req, res, next) => {
       });
     }
     
-    // Add user info to request
+    // Add user info to request - CRITICAL: Use 'id' not '_id'
     req.user = {
-      id: decoded.id,
+      id: decoded.id,  // This should be a string ID
+      _id: user._id,   // Keep MongoDB ObjectId for compatibility
       role: decoded.role || 'user',
-      username: user.username
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email
     };
+    
+    console.log('Auth middleware: User authenticated:', req.user.id);
     
     next();
   } catch (error) {
+    console.error('Auth middleware error:', error);
+    
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({
         success: false,
@@ -75,8 +83,12 @@ const optionalAuth = async (req, res, next) => {
       if (user) {
         req.user = {
           id: decoded.id,
+          _id: user._id,
           role: decoded.role || 'user',
-          username: user.username
+          username: user.username,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email
         };
       }
     }
