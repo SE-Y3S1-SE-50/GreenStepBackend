@@ -99,10 +99,11 @@ const createChallenge = async (req, res) => {
 };
 
 // Join challenge
+// Join challenge
 const joinChallenge = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id;
+    const userId = req.user._id || req.user.id; // Add fallback to req.user.id
     
     const challenge = await Challenge.findById(id);
     if (!challenge) {
@@ -255,6 +256,51 @@ const getCreatedChallenges = async (req, res) => {
   }
 };
 
+// Get challenge leaderboard
+const getLeaderboard = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const challenge = await Challenge.findById(id)
+      .populate('participants.user', 'username firstName lastName profilePicture');
+    
+    if (!challenge) {
+      return res.status(404).json({ message: 'Challenge not found' });
+    }
+    
+    // Sort participants by progress (descending)
+    const leaderboard = challenge.participants
+      .map(participant => ({
+        user: {
+          _id: participant.user._id,
+          username: participant.user.username,
+          firstName: participant.user.firstName,
+          lastName: participant.user.lastName,
+          profilePicture: participant.user.profilePicture || ''
+        },
+        progress: participant.progress,
+        completed: participant.completed,
+        joinedAt: participant.joinedAt
+      }))
+      .sort((a, b) => b.progress - a.progress);
+    
+    res.json({
+      success: true,
+      leaderboard: leaderboard,
+      challenge: {
+        id: challenge._id,
+        title: challenge.title,
+        target: challenge.target,
+        unit: challenge.unit
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Failed to fetch leaderboard' });
+  }
+};
+
+
 module.exports = {
   getAllChallenges,
   getChallenge,
@@ -262,5 +308,6 @@ module.exports = {
   joinChallenge,
   updateProgress,
   getUserChallenges,
-  getCreatedChallenges
+  getCreatedChallenges,
+  getLeaderboard
 };
