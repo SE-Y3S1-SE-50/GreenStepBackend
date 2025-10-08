@@ -100,20 +100,50 @@ const createChallenge = async (req, res) => {
 
 // Join challenge
 // Join challenge
+// Join challenge
 const joinChallenge = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id || req.user.id; // Add fallback to req.user.id
+    
+    // Add logging to debug
+    console.log('🔍 Join challenge request:', {
+      challengeId: id,
+      userId: req.user?.id,
+      userObjectId: req.user?._id,
+      userInfo: req.user
+    });
+    
+    if (!req.user || (!req.user.id && !req.user._id)) {
+      console.log('❌ No user found in request');
+      return res.status(401).json({ message: 'Authentication required' });
+    }
+    
+    const userId = req.user._id || req.user.id;
+    console.log('🔍 Using userId:', userId);
     
     const challenge = await Challenge.findById(id);
     if (!challenge) {
+      console.log('❌ Challenge not found:', id);
       return res.status(404).json({ message: 'Challenge not found' });
     }
     
+    console.log('✅ Challenge found:', challenge.title);
+    console.log('🔍 Current participants:', challenge.participants.length);
+    
     // Check if user already joined
-    const alreadyJoined = challenge.participants.some(p => p.user.toString() === userId.toString());
+    const alreadyJoined = challenge.participants.some(p => {
+      const participantId = p.user.toString();
+      const currentUserId = userId.toString();
+      console.log('🔍 Comparing:', { participantId, currentUserId, match: participantId === currentUserId });
+      return participantId === currentUserId;
+    });
+    
     if (alreadyJoined) {
-      return res.status(400).json({ message: 'Already joined this challenge' });
+      console.log('⚠️ User already joined this challenge');
+      return res.status(400).json({ 
+        success: false,
+        message: 'Already joined this challenge' 
+      });
     }
     
     // Add user to participants
@@ -124,11 +154,14 @@ const joinChallenge = async (req, res) => {
       completed: false
     });
     
+    console.log('💾 Saving challenge with new participant...');
     await challenge.save();
+    console.log('✅ Challenge saved successfully');
     
     // Award joining rewards
     const { awardChallengeJoin } = require('../../utils/rewards');
     const rewardInfo = await awardChallengeJoin(userId);
+    console.log('🎁 Rewards awarded:', rewardInfo);
     
     const updatedChallenge = await Challenge.findById(id)
       .populate('createdBy', 'username firstName lastName')
@@ -141,10 +174,16 @@ const joinChallenge = async (req, res) => {
       rewards: rewardInfo
     };
     
+    console.log('✅ Sending success response');
     res.json(response);
   } catch (error) {
-    console.error('Error joining challenge:', error);
-    res.status(500).json({ message: 'Failed to join challenge' });
+    console.error('❌ Error joining challenge:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to join challenge',
+      error: error.message 
+    });
   }
 };
 
