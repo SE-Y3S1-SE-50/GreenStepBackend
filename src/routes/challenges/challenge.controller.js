@@ -40,8 +40,20 @@ const createChallenge = async (req, res) => {
   try {
     const { title, description, category, difficulty, points, duration, target, unit, imageUrl } = req.body;
     
+    // Validate required fields
+    if (!title || !description || !category || !difficulty) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        required: ['title', 'description', 'category', 'difficulty']
+      });
+    }
+    
     // Get user ID from JWT token
     const userId = req.user._id;
+    
+    console.log('Creating challenge with data:', {
+      title, description, category, difficulty, points, duration, target, unit, imageUrl, userId
+    });
     
     const challenge = new Challenge({
       title,
@@ -56,7 +68,11 @@ const createChallenge = async (req, res) => {
       createdBy: userId
     });
     
+    console.log('Challenge object created:', challenge);
+    console.log('Saving challenge to database...');
+    
     await challenge.save();
+    console.log('Challenge saved successfully with ID:', challenge._id);
     
     // Award creation rewards
     const { awardChallengeCreation } = require('../../utils/rewards');
@@ -74,7 +90,11 @@ const createChallenge = async (req, res) => {
     res.status(201).json(response);
   } catch (error) {
     console.error('Error creating challenge:', error);
-    res.status(500).json({ message: 'Failed to create challenge' });
+    res.status(500).json({ 
+      message: 'Failed to create challenge',
+      error: error.message,
+      details: error
+    });
   }
 };
 
@@ -134,10 +154,24 @@ const updateProgress = async (req, res) => {
     const { progress } = req.body;
     const userId = req.user._id;
     
+    // Validate progress input
+    if (progress === undefined || progress === null) {
+      return res.status(400).json({ message: 'Progress value is required' });
+    }
+    
+    if (typeof progress !== 'number' || progress < 0) {
+      return res.status(400).json({ message: 'Progress must be a non-negative number' });
+    }
+    
+    console.log('Updating progress:', { challengeId: id, userId, progress });
+    
     const challenge = await Challenge.findById(id);
     if (!challenge) {
+      console.log('Challenge not found:', id);
       return res.status(404).json({ message: 'Challenge not found' });
     }
+    
+    console.log('Challenge found:', challenge.title);
     
     // Find user in participants
     const participant = challenge.participants.find(p => p.user.toString() === userId.toString());
@@ -173,7 +207,11 @@ const updateProgress = async (req, res) => {
     res.json(response);
   } catch (error) {
     console.error('Error updating progress:', error);
-    res.status(500).json({ message: 'Failed to update progress' });
+    res.status(500).json({ 
+      message: 'Failed to update progress',
+      error: error.message,
+      details: error
+    });
   }
 };
 
