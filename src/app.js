@@ -1,6 +1,7 @@
 const express = require('express')
 const cookieParser = require('cookie-parser');
 const jwt = require("jsonwebtoken");
+const CommunityRouter = require('./routes/community/community.router');
 
 const UserRouter = require('./routes/auth/auth.router');
 const DashboardRouter = require('./routes/dashboard/dashboard.router');
@@ -8,6 +9,7 @@ const ChallengeRouter = require('./routes/challenges/challenge.router');
 const AuthRouter = require('./routes/user/user.router');
 
 const app = express();
+app.use('/api/community', CommunityRouter);
 
 app.use(express.json());
 app.use(cookieParser());

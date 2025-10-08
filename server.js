@@ -3,6 +3,7 @@ const app = require('./src/app')
 const mongoose = require('mongoose')
 const dotenv = require('dotenv')
 
+
 dotenv.config()
 
 const PORT = process.env.PORT || 8000
@@ -18,6 +19,7 @@ mongoose.connection.once('open', () => {
 mongoose.connection.on('error', (err) => {
   console.error('Error connecting with MongoDB:', err);
 });
+
 
 async function startServer() {
   try {
