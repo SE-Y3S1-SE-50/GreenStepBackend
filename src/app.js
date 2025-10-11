@@ -1,15 +1,20 @@
 const express = require('express')
 const cookieParser = require('cookie-parser');
 const jwt = require("jsonwebtoken");
-const CommunityRouter = require('./routes/community/community.router');
+
 
 const UserRouter = require('./routes/auth/auth.router');
 const DashboardRouter = require('./routes/dashboard/dashboard.router');
 const ChallengeRouter = require('./routes/challenges/challenge.router');
 const AuthRouter = require('./routes/user/user.router');
+const CommunityRouter = require('./routes/postRoutes');
+
 
 const app = express();
-app.use('/api/community', CommunityRouter);
+
+
+
+
 
 app.use(express.json());
 app.use(cookieParser());
@@ -49,6 +54,7 @@ app.use('/api/dashboard', DashboardRouter);
 
 app.use('/api/challenges', ChallengeRouter);
 app.use('/api/users', AuthRouter);
+app.use('/api/posts', CommunityRouter);
 
 // Auth helpers (root)
 app.get('/check-cookie', (req, res) => {
