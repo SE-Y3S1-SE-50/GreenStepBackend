@@ -70,6 +70,112 @@ const getContentById = async (req, res) => {
   }
 };
 
+// Create educational content (NEW)
+const createContent = async (req, res) => {
+  try {
+    const content = new EducationalContent(req.body);
+    await content.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Content created successfully',
+      data: content
+    });
+  } catch (error) {
+    console.error('Error creating content:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating content',
+      error: error.message
+    });
+  }
+};
+
+// Bulk create content (NEW)
+const bulkCreateContent = async (req, res) => {
+  try {
+    const contents = await EducationalContent.insertMany(req.body);
+    
+    res.status(201).json({
+      success: true,
+      message: `${contents.length} content items created successfully`,
+      data: contents
+    });
+  } catch (error) {
+    console.error('Error bulk creating content:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error bulk creating content',
+      error: error.message
+    });
+  }
+};
+
+// Update educational content (NEW)
+const updateContent = async (req, res) => {
+  try {
+    const { contentId } = req.params;
+    
+    const content = await EducationalContent.findOneAndUpdate(
+      { contentId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        message: 'Content not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Content updated successfully',
+      data: content
+    });
+  } catch (error) {
+    console.error('Error updating content:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating content',
+      error: error.message
+    });
+  }
+};
+
+// Delete educational content (NEW)
+const deleteContent = async (req, res) => {
+  try {
+    const { contentId } = req.params;
+    
+    const content = await EducationalContent.findOneAndUpdate(
+      { contentId },
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        message: 'Content not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Content deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting content:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting content',
+      error: error.message
+    });
+  }
+};
+
 // Get all quizzes
 const getAllQuizzes = async (req, res) => {
   try {
@@ -139,6 +245,92 @@ const getQuizById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching quiz',
+      error: error.message
+    });
+  }
+};
+
+// Create quiz (NEW)
+const createQuiz = async (req, res) => {
+  try {
+    const quiz = new Quiz(req.body);
+    await quiz.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Quiz created successfully',
+      data: quiz
+    });
+  } catch (error) {
+    console.error('Error creating quiz:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating quiz',
+      error: error.message
+    });
+  }
+};
+
+// Update quiz (NEW)
+const updateQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    
+    const quiz = await Quiz.findOneAndUpdate(
+      { quizId },
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quiz not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Quiz updated successfully',
+      data: quiz
+    });
+  } catch (error) {
+    console.error('Error updating quiz:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating quiz',
+      error: error.message
+    });
+  }
+};
+
+// Delete quiz (NEW)
+const deleteQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    
+    const quiz = await Quiz.findOneAndUpdate(
+      { quizId },
+      { isActive: false },
+      { new: true }
+    );
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: 'Quiz not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Quiz deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting quiz:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting quiz',
       error: error.message
     });
   }
@@ -264,10 +456,20 @@ const getUserQuizProgress = async (req, res) => {
 };
 
 module.exports = {
+  // Content endpoints
   getAllContent,
   getContentById,
+  createContent,
+  bulkCreateContent,
+  updateContent,
+  deleteContent,
+  
+  // Quiz endpoints
   getAllQuizzes,
   getQuizById,
+  createQuiz,
+  updateQuiz,
+  deleteQuiz,
   submitQuiz,
   getUserQuizProgress
 };
