@@ -8,6 +8,7 @@ const DashboardRouter = require('./routes/dashboard/dashboard.router');
 const ChallengeRouter = require('./routes/challenges/challenge.router');
 const AuthRouter = require('./routes/user/user.router');
 const CommunityRouter = require('./routes/postRoutes');
+const EducationRouter = require('./routes/education/education.router');
 
 
 const app = express();
@@ -51,10 +52,10 @@ app.use((req, res, next) => {
 
 app.use('/api/auth', UserRouter);
 app.use('/api/dashboard', DashboardRouter);
-
 app.use('/api/challenges', ChallengeRouter);
 app.use('/api/users', AuthRouter);
 app.use('/api/posts', CommunityRouter);
+app.use('/api/education', EducationRouter);
 
 // Auth helpers (root)
 app.get('/check-cookie', (req, res) => {
